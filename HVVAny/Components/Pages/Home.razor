@@ -1,0 +1,81 @@
+﻿@page "/"
+@using Backoffice
+@using Streckennetz.Tarife
+@inject Session Backend
+@rendermode InteractiveServer
+
+<PageTitle>Home</PageTitle>
+
+<h1>LVV</h1>
+
+<div class="ui">
+    @if (_aktiveFahrt == null)
+    {
+        @* <button @onclick="AnyStart">LVV Any starten...</button> *@
+        <button @onclick="() => Ticket(Tarif.EinzelfahrtKurzstrecke)">Einzelfahrt Kurzstrecke</button>
+        <button @onclick="() => Ticket(Tarif.EinzelfahrtNahbereich)">Einzelfahrt Nahbereich</button>
+        <button @onclick="() => Ticket(Tarif.EinzelfahrtGesamtnetz)">Einzelfahrt Gesamtnetz</button>
+        <button @onclick="() => Ticket(Tarif.TageskarteNahbereich)">Tageskarte Nahbereich</button>
+        <button @onclick="() => Ticket(Tarif.TageskarteGesamtnetz)">Tageskarte Gesamtnetz</button>
+    }
+    else
+    {
+        <div class="ticket">
+            <div>@_aktiveFahrt.TarifName</div>
+        </div>
+    }
+    @if (_kontostand.HasValue)
+    {
+        <div class="kontostand">Ihr Kontostand: @(_kontostand.Value) EUR</div>
+    }
+</div>
+
+<style>
+    div.kontostand {
+        margin-top: 3rem;;
+    }
+    div.ticket {
+        background-color: #8acb9e;
+        border: 2px green solid;
+        min-height: 3rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    div.ui {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    button {
+        margin: 5px;
+    }
+</style>
+
+@code {
+
+    private decimal? _kontostand;
+    private FahrtInfo? _aktiveFahrt;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        base.OnParametersSetAsync();
+        await UpdateState();
+    }
+
+    private async Task UpdateState()
+    {
+        _kontostand = await Backend.Kontostand();
+        _aktiveFahrt = await Backend.AktiveFahrtInfo();
+    }
+
+    private async Task Ticket(Tarif tarif)
+    {
+        await Backend.FahrkarteKaufen(tarif, null);
+        await UpdateState();
+    }
+
+}
